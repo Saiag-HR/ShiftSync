@@ -2,7 +2,12 @@
 
 import { useState, useTransition } from "react";
 import type { UserRole } from "@/lib/auth";
-import { resetUserPassword, setUserRole } from "./actions";
+import {
+  resetUserPassword,
+  setNightShiftExempt,
+  setUserBlocked,
+  setUserRole,
+} from "./actions";
 
 type Status = { tone: "success" | "error"; text: string } | null;
 
@@ -12,6 +17,8 @@ export type UserRowData = {
   username: string;
   role: UserRole;
   createdAt: string;
+  isBlocked: boolean;
+  nightExempt: boolean;
   isSelf: boolean;
 };
 
@@ -38,6 +45,34 @@ export function UserRow({ user }: { user: UserRowData }) {
     });
   }
 
+  function toggleNightExempt(exempt: boolean) {
+    setStatus(null);
+    startTransition(async () => {
+      const result = await setNightShiftExempt(user.id, exempt);
+      setStatus(
+        result.ok
+          ? { tone: "success", text: exempt ? "הוגדר פטור ממשמרת לילה." : "הפטור בוטל." }
+          : { tone: "error", text: result.error },
+      );
+    });
+  }
+
+  function toggleBlocked() {
+    const blocking = !user.isBlocked;
+    if (blocking && !window.confirm(`לחסום את ${user.fullName}? המשתמש לא יוכל להתחבר.`)) {
+      return;
+    }
+    setStatus(null);
+    startTransition(async () => {
+      const result = await setUserBlocked(user.id, blocking);
+      setStatus(
+        result.ok
+          ? { tone: "success", text: blocking ? "המשתמש נחסם." : "החסימה בוטלה." }
+          : { tone: "error", text: result.error },
+      );
+    });
+  }
+
   function savePassword() {
     setStatus(null);
     startTransition(async () => {
@@ -53,13 +88,18 @@ export function UserRow({ user }: { user: UserRowData }) {
   }
 
   return (
-    <li className="space-y-3 px-4 py-4">
+    <li className={`space-y-3 px-4 py-4 ${user.isBlocked ? "bg-zinc-50 dark:bg-zinc-950/50" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-medium">
-            {user.fullName}
+          <p className="flex flex-wrap items-center gap-2 font-medium">
+            <span className={user.isBlocked ? "text-zinc-500" : ""}>{user.fullName}</span>
             {user.isSelf && (
-              <span className="ms-2 text-xs font-normal text-zinc-500">(את/ה)</span>
+              <span className="text-xs font-normal text-zinc-500">(את/ה)</span>
+            )}
+            {user.isBlocked && (
+              <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-950 dark:text-rose-300">
+                🔒 חסום
+              </span>
             )}
           </p>
           <p className="text-sm text-zinc-500">
@@ -91,8 +131,36 @@ export function UserRow({ user }: { user: UserRowData }) {
           >
             איפוס סיסמה
           </button>
+          {!user.isSelf && (
+            <button
+              type="button"
+              onClick={toggleBlocked}
+              disabled={pending}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+                user.isBlocked
+                  ? "border border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
+                  : "border border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-900 dark:text-rose-400 dark:hover:bg-rose-950/40"
+              }`}
+            >
+              {user.isBlocked ? "ביטול חסימה" : "חסימה"}
+            </button>
+          )}
         </div>
       </div>
+
+      {user.role === "employee" && (
+        <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            role="switch"
+            checked={user.nightExempt}
+            disabled={pending}
+            onChange={(event) => toggleNightExempt(event.target.checked)}
+            className="size-4 accent-zinc-900 dark:accent-white"
+          />
+          פטור מחובת משמרת לילה
+        </label>
+      )}
 
       {showReset && (
         <form

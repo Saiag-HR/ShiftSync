@@ -94,6 +94,7 @@ export default async function EmployeePage({
           initial={availability}
           open={settings.availabilityOpen}
           shiftHours={settings.shiftHours}
+          nightExempt={user.exemptFromNightShift}
         />
       </section>
 

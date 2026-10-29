@@ -19,6 +19,7 @@ export type AuthFormState = {
 
 const INVALID_CREDENTIALS = "שם המשתמש או הסיסמה שגויים.";
 const USERNAME_TAKEN = "שם המשתמש הזה כבר תפוס. נסו שם אחר.";
+const BLOCKED = 'החשבון נחסם ע"י המנהל';
 const SERVER_MISCONFIGURED =
   "המערכת אינה מוגדרת כראוי (חסר מפתח שרת). פנו למנהל המערכת.";
 
@@ -53,7 +54,7 @@ export async function signIn(
   // auth email. This also covers older accounts with a real email.
   const { data: profile, error: lookupError } = await admin
     .from("profiles")
-    .select("id, role")
+    .select("id, role, is_blocked")
     .eq("username_key", usernameKey(username))
     .maybeSingle();
   if (lookupError) {
@@ -77,8 +78,18 @@ export async function signIn(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
+  // Supabase Auth checks the password before the ban, so "blocked" is only
+  // shown to someone who knows the password, not to anyone probing names.
+  if (error?.code === "user_banned") {
+    return { error: BLOCKED, fields };
+  }
   if (error) {
     return { error: INVALID_CREDENTIALS, fields };
+  }
+  // Fallback if the profile is blocked but the Auth ban didn't apply.
+  if (profile.is_blocked) {
+    await supabase.auth.signOut();
+    return { error: BLOCKED, fields };
   }
 
   redirect(ROLE_HOME[profile.role ?? "employee"]);

@@ -5,7 +5,9 @@ import { WeekNav } from "@/components/week-nav";
 import { getCurrentUser } from "@/lib/auth";
 import { getSystemSettings } from "@/lib/settings";
 import {
+  addDays,
   cellKey,
+  isWeekend,
   resolveWeekStart,
   SHIFTS,
   startOfWeek,
@@ -15,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { AvailabilityToggle } from "./availability-toggle";
 import { ScheduleEditor, type ScheduleEmployee } from "./schedule-editor";
+import type { LastWeekend } from "./schedule-logic";
 import { ShiftSettings } from "./shift-settings";
 
 export const metadata: Metadata = { title: "שיבוץ עובדים" };
@@ -30,13 +33,14 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const weekEnd = dates[dates.length - 1];
 
   const supabase = await createClient();
-  const [settings, employeesResult, assignmentsResult, availabilityResult] =
+  const [settings, employeesResult, assignmentsResult, availabilityResult, lastWeekResult] =
     await Promise.all([
       getSystemSettings(),
       supabase
         .from("profiles")
         .select("id, full_name")
         .eq("role", "employee")
+        .eq("is_blocked", false)
         .order("full_name"),
       supabase
         .from("shift_assignments")
@@ -45,10 +49,19 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
         .lte("shift_date", weekEnd),
       supabase
         .from("shift_availabilities")
-        .select("employee_id, shift_date, shift_type, is_available")
+        .select("employee_id, shift_date, shift_type, is_available, submitted_at")
         .gte("shift_date", weekStart)
-        .lte("shift_date", weekEnd),
+        .lte("shift_date", weekEnd)
+        .order("submitted_at"),
+      // Last week's assignments, for the weekend repeat rule.
+      supabase
+        .from("shift_assignments")
+        .select("shift_date, shift_type, employee_id")
+        .gte("shift_date", addDays(weekStart, -7))
+        .lt("shift_date", weekStart)
+        .not("employee_id", "is", null),
     ]);
+  if (lastWeekResult.error) throw lastWeekResult.error;
   if (employeesResult.error) throw employeesResult.error;
   if (assignmentsResult.error) throw assignmentsResult.error;
   if (availabilityResult.error) throw availabilityResult.error;
@@ -80,6 +93,30 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     }
   }
 
+  // Per shift: available employees in submission order (first come, first
+  // served). Rows submitted at the same moment, such as those from before
+  // submission times were recorded, are ordered by name.
+  const names = new Map(employees.map((e) => [e.id, e.fullName]));
+  const queues: Record<string, string[]> = {};
+  const queueRows = availabilityResult.data
+    .filter((row) => row.is_available && row.employee_id && names.has(row.employee_id))
+    .toSorted(
+      (a, b) =>
+        a.submitted_at.localeCompare(b.submitted_at) ||
+        names.get(a.employee_id!)!.localeCompare(names.get(b.employee_id!)!, "he"),
+    );
+  for (const row of queueRows) {
+    (queues[cellKey(row.shift_date, row.shift_type)] ??= []).push(row.employee_id!);
+  }
+
+  // This week's Friday/Saturday shifts → who worked the same shift a week ago.
+  const lastWeekend: LastWeekend = {};
+  for (const row of lastWeekResult.data) {
+    if (row.employee_id && isWeekend(row.shift_date)) {
+      lastWeekend[cellKey(addDays(row.shift_date, 7), row.shift_type)] = row.employee_id;
+    }
+  }
+
   const respondedCount = employees.filter((e) => responded.has(e.id)).length;
   const totalShifts = dates.length * SHIFTS.length;
 
@@ -92,8 +129,8 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             שלום, {user.fullName}
           </h1>
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            בחרו עובד לכל משמרת. ברשימה מופיעים רק עובדים שסימנו שהם זמינים
-            למשמרת.
+            משמרות פנויות מקבלות אוטומטית את העובד הזמין שהגיש ראשון. בדקו את
+            ההצעות, שנו לפי הצורך ושמרו.
           </p>
         </div>
         <AvailabilityToggle open={settings.availabilityOpen} />
@@ -116,6 +153,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           employees={employees}
           initial={assignments}
           availability={availability}
+          queues={queues}
+          lastWeekend={lastWeekend}
+          today={today}
           shiftHours={settings.shiftHours}
         />
       </section>

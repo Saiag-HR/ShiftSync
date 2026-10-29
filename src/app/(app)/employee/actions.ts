@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   isIsoDate,
   isShiftType,
+  NIGHT_SHIFT_REQUIRED_MESSAGE,
   startOfWeek,
   todayIso,
   weekDates,
@@ -51,6 +52,24 @@ export async function saveAvailability(
   }
 
   const supabase = await createClient();
+
+  // At least one night shift a week, unless an admin exempted the user.
+  // A night already saved on an earlier (now past) day of the week counts.
+  if (!user.exemptFromNightShift && !entries.some((e) => e.shift === "night" && e.available)) {
+    const { data: pastNights, error: nightsError } = await supabase
+      .from("shift_availabilities")
+      .select("id")
+      .eq("employee_id", user.id)
+      .eq("shift_type", "night")
+      .eq("is_available", true)
+      .gte("shift_date", weekStart)
+      .lt("shift_date", today)
+      .limit(1);
+    if (nightsError || pastNights.length === 0) {
+      return { ok: false, error: NIGHT_SHIFT_REQUIRED_MESSAGE };
+    }
+  }
+
   const { error } = await supabase.from("shift_availabilities").upsert(
     entries.map((entry) => ({
       employee_id: user.id,

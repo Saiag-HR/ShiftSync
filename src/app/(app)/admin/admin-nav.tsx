@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS = [
   { href: "/admin", label: "שיבוץ עובדים" },
   { href: "/admin/users", label: "ניהול משתמשים" },
+  { href: "/admin/stats", label: "סטטיסטיקות ונתונים" },
 ];
 
 export function AdminNav() {
@@ -14,7 +15,7 @@ export function AdminNav() {
   return (
     <nav
       aria-label="ניווט מנהל"
-      className="mb-8 flex gap-1 border-b border-zinc-200 dark:border-zinc-800"
+      className="mb-8 flex gap-1 overflow-x-auto border-b border-zinc-200 dark:border-zinc-800"
     >
       {TABS.map((tab) => {
         const active = pathname === tab.href;
@@ -23,7 +24,7 @@ export function AdminNav() {
             key={tab.href}
             href={tab.href}
             aria-current={active ? "page" : undefined}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm font-medium ${
+            className={`-mb-px shrink-0 border-b-2 px-4 py-2 text-sm font-medium ${
               active
                 ? "border-zinc-900 text-zinc-900 dark:border-white dark:text-white"
                 : "border-transparent text-zinc-500 hover:text-zinc-900 dark:hover:text-white"

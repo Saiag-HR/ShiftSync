@@ -16,6 +16,22 @@ export const SHIFT_LABELS = Object.fromEntries(
   SHIFTS.map((shift) => [shift.type, shift.label]),
 ) as Record<ShiftType, string>;
 
+// Weekly limits per employee: a hard cap, and the shift number from which
+// the admin is warned if someone with fewer shifts could take it instead.
+export const MAX_SHIFTS_PER_WEEK = 6;
+export const FAIRNESS_WARNING_FROM_SHIFT = 5;
+
+// Friday and Saturday (getUTCDay values). The same weekend shift isn't
+// auto-assigned to the same person two weeks in a row.
+export const WEEKEND_DAYS = [5, 6];
+
+export function isWeekend(iso: string) {
+  return WEEKEND_DAYS.includes(new Date(`${iso}T00:00:00Z`).getUTCDay());
+}
+
+export const NIGHT_SHIFT_REQUIRED_MESSAGE =
+  "חובה לבחור לפחות משמרת לילה אחת בשבוע כדי להגיש זמינות";
+
 // Time zone used to decide what "today" is, and the first day of the week
 // (0 = Sunday, 1 = Monday).
 export const APP_TIME_ZONE = "Asia/Jerusalem";

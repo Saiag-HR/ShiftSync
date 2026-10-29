@@ -3,8 +3,10 @@
 import { refresh } from "next/cache";
 import { requireRole } from "@/lib/auth";
 import {
+  cellKey,
   isIsoDate,
   isShiftType,
+  MAX_SHIFTS_PER_WEEK,
   startOfWeek,
   weekDates,
   type ShiftType,
@@ -46,9 +48,45 @@ export async function saveSchedule(
     return { ok: false, error: "השינויים בסידור אינם תקינים." };
   }
 
+  const supabase = await createClient();
+
+  // Enforce the weekly cap on the schedule as it will be after saving,
+  // not just on what the editor showed.
+  const weekEnd = weekDates(weekStart)[6];
+  const { data: existing, error: loadError } = await supabase
+    .from("shift_assignments")
+    .select("shift_date, shift_type, employee_id")
+    .gte("shift_date", weekStart)
+    .lte("shift_date", weekEnd);
+  if (loadError) {
+    return { ok: false, error: "לא הצלחנו לשמור את הסידור. נסו שוב." };
+  }
+
+  const finalSchedule = new Map(
+    existing.map((row) => [cellKey(row.shift_date, row.shift_type), row.employee_id]),
+  );
+  for (const change of changes) {
+    finalSchedule.set(cellKey(change.date, change.shift), change.employeeId);
+  }
+  const weeklyCounts = new Map<string, number>();
+  for (const employeeId of finalSchedule.values()) {
+    if (employeeId) weeklyCounts.set(employeeId, (weeklyCounts.get(employeeId) ?? 0) + 1);
+  }
+  const overLimit = [...weeklyCounts].find(([, count]) => count > MAX_SHIFTS_PER_WEEK);
+  if (overLimit) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", overLimit[0])
+      .maybeSingle();
+    return {
+      ok: false,
+      error: `${profile?.full_name ?? "העובד"} הגיע/ה למכסה המרבית של ${MAX_SHIFTS_PER_WEEK} משמרות השבוע.`,
+    };
+  }
+
   // An unassigned shift is stored as a row with employee_id = null, the same
   // state the schema uses when an assigned employee's profile is deleted.
-  const supabase = await createClient();
   const { error } = await supabase.from("shift_assignments").upsert(
     changes.map((change) => ({
       shift_date: change.date,

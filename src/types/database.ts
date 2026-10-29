@@ -21,6 +21,8 @@ export type Database = {
           // Generated: LOWER(username). Read-only.
           username_key: string;
           role: Database["public"]["Enums"]["user_role"] | null;
+          is_blocked: boolean;
+          exempt_from_night_shift: boolean;
           created_at: string | null;
         };
         Insert: {
@@ -28,6 +30,8 @@ export type Database = {
           full_name: string;
           username: string;
           role?: Database["public"]["Enums"]["user_role"] | null;
+          is_blocked?: boolean;
+          exempt_from_night_shift?: boolean;
           created_at?: string | null;
         };
         Update: {
@@ -35,6 +39,8 @@ export type Database = {
           full_name?: string;
           username?: string;
           role?: Database["public"]["Enums"]["user_role"] | null;
+          is_blocked?: boolean;
+          exempt_from_night_shift?: boolean;
           created_at?: string | null;
         };
         Relationships: [];
@@ -64,6 +70,8 @@ export type Database = {
           shift_date: string;
           shift_type: Database["public"]["Enums"]["shift_type"];
           is_available: boolean | null;
+          // Set by a trigger; any client value is ignored.
+          submitted_at: string;
         };
         Insert: {
           id?: string;
@@ -71,6 +79,7 @@ export type Database = {
           shift_date: string;
           shift_type: Database["public"]["Enums"]["shift_type"];
           is_available?: boolean | null;
+          submitted_at?: string;
         };
         Update: {
           id?: string;
@@ -78,6 +87,7 @@ export type Database = {
           shift_date?: string;
           shift_type?: Database["public"]["Enums"]["shift_type"];
           is_available?: boolean | null;
+          submitted_at?: string;
         };
         Relationships: [
           {
@@ -141,6 +151,15 @@ export type Database = {
       is_availability_open: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
+      };
+      shift_stats: {
+        Args: { p_from: string; p_to: string };
+        Returns: {
+          employee_id: string;
+          total_shifts: number;
+          night_shifts: number;
+          submitted_weeks: number;
+        }[];
       };
     };
     Enums: {

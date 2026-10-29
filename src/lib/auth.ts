@@ -11,6 +11,8 @@ export type CurrentUser = {
   username: string;
   fullName: string;
   role: UserRole;
+  // Exempt from offering at least one night shift a week.
+  exemptFromNightShift: boolean;
 };
 
 export const ROLE_HOME: Record<UserRole, string> = {
@@ -35,7 +37,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, full_name, username, role")
+    .select("id, full_name, username, role, is_blocked, exempt_from_night_shift")
     .eq("id", data.claims.sub)
     .single();
 
@@ -44,12 +46,17 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
   if (error || !profile) {
     throw new Error("No profile found for the signed-in user.");
   }
+  // Covers sessions that were open when the admin blocked the user.
+  if (profile.is_blocked) {
+    redirect("/blocked");
+  }
 
   return {
     id: profile.id,
     username: profile.username,
     fullName: profile.full_name,
     role: profile.role ?? "employee",
+    exemptFromNightShift: profile.exempt_from_night_shift,
   };
 });
 

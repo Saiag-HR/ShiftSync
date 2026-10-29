@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { addDays, formatWeekRange } from "@/lib/schedule";
 
+// Touch-sized (44px) on phones, compact from sm up.
 const linkStyles =
-  "rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
+  "flex min-h-11 items-center justify-center gap-1 rounded-lg border border-zinc-300 px-3 text-sm font-medium hover:bg-zinc-100 sm:min-h-0 sm:py-1.5 dark:border-zinc-700 dark:hover:bg-zinc-800";
 
 // Arrows point the RTL way: earlier weeks are to the right.
 export function WeekNav({
@@ -15,6 +16,7 @@ export function WeekNav({
   currentWeekStart: string;
 }) {
   const href = (start: string) => `${basePath}?week=${start}`;
+  const isCurrent = weekStart === currentWeekStart;
 
   return (
     <nav
@@ -22,17 +24,17 @@ export function WeekNav({
       className="flex flex-wrap items-center justify-between gap-3"
     >
       <p className="text-lg font-semibold">{formatWeekRange(weekStart)}</p>
-      <div className="flex items-center gap-2">
+      <div className={`grid w-full gap-2 sm:flex sm:w-auto ${isCurrent ? "grid-cols-2" : "grid-cols-3"}`}>
         <Link href={href(addDays(weekStart, -7))} className={linkStyles}>
-          <span aria-hidden>→</span> השבוע הקודם
+          <span aria-hidden>→</span> הקודם
         </Link>
-        {weekStart !== currentWeekStart && (
+        {!isCurrent && (
           <Link href={href(currentWeekStart)} className={linkStyles}>
-            השבוע הנוכחי
+            השבוע
           </Link>
         )}
         <Link href={href(addDays(weekStart, 7))} className={linkStyles}>
-          השבוע הבא <span aria-hidden>←</span>
+          הבא <span aria-hidden>←</span>
         </Link>
       </div>
     </nav>

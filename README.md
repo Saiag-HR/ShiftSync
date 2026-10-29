@@ -26,14 +26,20 @@ Built with Next.js (App Router), TypeScript, Tailwind CSS and Supabase.
 
 ## Accounts
 
-Users sign up and sign in with a username and password; no email is needed. Supabase Auth still requires an email per account, so the app generates one (`<username>@users.shiftsync.invalid`) that never receives mail, and creates the account already confirmed.
+Users sign up and sign in with a username and password; no email is needed. Usernames can use Hebrew, English, numbers and spaces (up to 50 characters) and are matched case-insensitively. Supabase Auth still requires an email per account, so the app generates one (`<uuid>@users.shiftsync.invalid`) that never receives mail, and creates the account already confirmed.
 
 Supabase enforces its own minimum password length (6 characters at least); the app adds no password rules of its own.
 
-## Roles
+Don't create users by inserting into `auth.users` by hand: rows missing Supabase's required fields make Auth fail with HTTP 500 for that user. Sign up through the app, or see migration `20261029000005` for a working pattern.
 
-New users sign up as employees. To make someone an admin, run this in the Supabase SQL Editor:
+## Roles and user management
+
+New users sign up as employees. Admins manage users at `/admin/users`: change roles and set a new password for anyone who can't sign in. Passwords are stored only as hashes and can't be viewed.
+
+To make the first admin, run this in the Supabase SQL Editor:
 
 ```sql
-UPDATE profiles SET role = 'admin' WHERE username = '<username>';
+UPDATE profiles SET role = 'admin' WHERE username_key = lower('<username>');
 ```
+
+Migration `20261029000005` seeds `NoaNah` (admin), `employee1` and `employee2`, all with password `123456`. Change these passwords after the first sign-in.

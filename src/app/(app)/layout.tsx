@@ -36,8 +36,8 @@ async function UserMenu() {
     <div className="flex items-center gap-3">
       <div className="hidden text-end sm:block">
         <p className="text-sm font-medium">{user.fullName}</p>
-        <p className="text-xs text-zinc-500" dir="ltr">
-          @{user.username}
+        <p className="text-xs text-zinc-500">
+          <bdi>{user.username}</bdi>
         </p>
       </div>
       <span

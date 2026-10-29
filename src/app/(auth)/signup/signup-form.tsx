@@ -26,7 +26,6 @@ export function SignupForm() {
         autoComplete="username"
         defaultValue={state.fields?.username}
         hint={USERNAME_RULES}
-        ltr
       />
       <FormField
         label="סיסמה"

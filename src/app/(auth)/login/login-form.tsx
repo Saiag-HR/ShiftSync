@@ -18,7 +18,6 @@ export function LoginForm() {
         name="username"
         autoComplete="username"
         defaultValue={state.fields?.username}
-        ltr
       />
       <FormField
         label="סיסמה"

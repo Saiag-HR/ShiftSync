@@ -18,6 +18,8 @@ export type Database = {
           id: string;
           full_name: string;
           username: string;
+          // Generated: LOWER(username). Read-only.
+          username_key: string;
           role: Database["public"]["Enums"]["user_role"] | null;
           created_at: string | null;
         };

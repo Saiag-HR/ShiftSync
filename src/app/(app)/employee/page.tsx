@@ -3,7 +3,8 @@ import { connection } from "next/server";
 import { SettingsListener } from "@/components/settings-listener";
 import { WeekNav } from "@/components/week-nav";
 import { getCurrentUser } from "@/lib/auth";
-import { getAvailabilityOpen } from "@/lib/settings";
+import { getSystemSettings } from "@/lib/settings";
+import { formatRange } from "@/lib/shift-hours";
 import {
   cellKey,
   formatDayMonth,
@@ -35,8 +36,8 @@ export default async function EmployeePage({
   const weekEnd = dates[dates.length - 1];
 
   const supabase = await createClient();
-  const [availabilityOpen, availabilityResult, assignmentsResult] = await Promise.all([
-    getAvailabilityOpen(),
+  const [settings, availabilityResult, assignmentsResult] = await Promise.all([
+    getSystemSettings(),
     supabase
       .from("shift_availabilities")
       .select("shift_date, shift_type, is_available")
@@ -91,7 +92,8 @@ export default async function EmployeePage({
           dates={dates}
           today={today}
           initial={availability}
-          open={availabilityOpen}
+          open={settings.availabilityOpen}
+          shiftHours={settings.shiftHours}
         />
       </section>
 
@@ -112,8 +114,13 @@ export default async function EmployeePage({
                   {formatWeekday(shift.shift_date)}{" "}
                   {formatDayMonth(shift.shift_date)}
                 </span>
-                <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
-                  {SHIFT_LABELS[shift.shift_type]}
+                <span className="flex items-center gap-2">
+                  <span className="text-zinc-500" dir="ltr">
+                    {formatRange(settings.shiftHours[shift.shift_type])}
+                  </span>
+                  <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-950 dark:text-sky-300">
+                    {SHIFT_LABELS[shift.shift_type]}
+                  </span>
                 </span>
               </li>
             ))}

@@ -9,7 +9,8 @@ import {
   weekDates,
   type ShiftType,
 } from "@/lib/schedule";
-import { AVAILABILITY_OPEN_KEY } from "@/lib/settings";
+import { AVAILABILITY_OPEN_KEY, SHIFT_HOURS_KEY } from "@/lib/settings";
+import { isValidShiftHours, type ShiftHours } from "@/lib/shift-hours";
 import { createClient } from "@/lib/supabase/server";
 
 export type AssignmentChange = {
@@ -82,6 +83,38 @@ export async function setAvailabilityOpen(open: boolean): Promise<SaveResult> {
   // No row back means RLS blocked the update or the row is missing.
   if (error || data.length === 0) {
     return { ok: false, error: "לא הצלחנו לעדכן את מצב ההגשה. נסו שוב." };
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+export async function saveShiftHours(hours: ShiftHours): Promise<SaveResult> {
+  await requireRole("admin");
+
+  if (!isValidShiftHours(hours)) {
+    return {
+      ok: false,
+      error: "יש להזין שעת התחלה ושעת סיום לכל משמרת, ושתי השעות חייבות להיות שונות.",
+    };
+  }
+
+  // Rebuild the object so only the expected fields are stored.
+  const value = {
+    morning: { start: hours.morning.start, end: hours.morning.end },
+    evening: { start: hours.evening.start, end: hours.evening.end },
+    night: { start: hours.night.start, end: hours.night.end },
+  };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("system_settings")
+    .update({ value })
+    .eq("key", SHIFT_HOURS_KEY)
+    .select("key");
+
+  if (error || data.length === 0) {
+    return { ok: false, error: "לא הצלחנו לשמור את שעות המשמרות. נסו שוב." };
   }
 
   refresh();

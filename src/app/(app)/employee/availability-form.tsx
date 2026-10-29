@@ -7,6 +7,7 @@ import {
   formatWeekday,
   SHIFTS,
 } from "@/lib/schedule";
+import { formatRange, type ShiftHours } from "@/lib/shift-hours";
 import { saveAvailability, type AvailabilityEntry } from "./actions";
 
 type Status = { tone: "success" | "error"; text: string } | null;
@@ -17,12 +18,14 @@ export function AvailabilityForm({
   today,
   initial,
   open,
+  shiftHours,
 }: {
   weekStart: string;
   dates: string[];
   today: string;
   // Whether an admin has opened availability submission.
   open: boolean;
+  shiftHours: ShiftHours;
   // Keyed by cellKey(); missing keys mean the employee hasn't answered yet.
   initial: Record<string, boolean>;
 }) {
@@ -144,6 +147,9 @@ export function AvailabilityForm({
               >
                 <th scope="row" className="p-3 text-start font-medium">
                   {shift.label}
+                  <span className="block text-xs font-normal text-zinc-500" dir="ltr">
+                    {formatRange(shiftHours[shift.type])}
+                  </span>
                 </th>
                 {dates.map((date) => {
                   const key = cellKey(date, shift.type);

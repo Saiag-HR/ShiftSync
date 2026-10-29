@@ -9,6 +9,7 @@ import {
   SHIFTS,
   type ShiftType,
 } from "@/lib/schedule";
+import { formatRange, type ShiftHours } from "@/lib/shift-hours";
 import { saveSchedule, type AssignmentChange } from "./actions";
 
 export type ScheduleEmployee = { id: string; fullName: string };
@@ -28,10 +29,12 @@ export function ScheduleEditor({
   employees,
   initial,
   availability,
+  shiftHours,
 }: {
   weekStart: string;
   dates: string[];
   employees: ScheduleEmployee[];
+  shiftHours: ShiftHours;
   // Both keyed by cellKey().
   initial: Assignments;
   availability: Record<string, Record<string, boolean>>;
@@ -112,6 +115,9 @@ export function ScheduleEditor({
               <tr key={shift.type} className="border-t border-zinc-100 align-top dark:border-zinc-800">
                 <th scope="row" className="p-3 text-start font-medium">
                   {shift.label}
+                  <span className="block text-xs font-normal text-zinc-500" dir="ltr">
+                    {formatRange(shiftHours[shift.type])}
+                  </span>
                 </th>
                 {dates.map((date) => {
                   const key = cellKey(date, shift.type);

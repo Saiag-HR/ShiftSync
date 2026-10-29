@@ -3,7 +3,7 @@ import { connection } from "next/server";
 import { SettingsListener } from "@/components/settings-listener";
 import { WeekNav } from "@/components/week-nav";
 import { getCurrentUser } from "@/lib/auth";
-import { getAvailabilityOpen } from "@/lib/settings";
+import { getSystemSettings } from "@/lib/settings";
 import {
   cellKey,
   resolveWeekStart,
@@ -15,6 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { AvailabilityToggle } from "./availability-toggle";
 import { ScheduleEditor, type ScheduleEmployee } from "./schedule-editor";
+import { ShiftSettings } from "./shift-settings";
 
 export const metadata: Metadata = { title: "שיבוץ עובדים" };
 
@@ -29,9 +30,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const weekEnd = dates[dates.length - 1];
 
   const supabase = await createClient();
-  const [availabilityOpen, employeesResult, assignmentsResult, availabilityResult] =
+  const [settings, employeesResult, assignmentsResult, availabilityResult] =
     await Promise.all([
-      getAvailabilityOpen(),
+      getSystemSettings(),
       supabase
         .from("profiles")
         .select("id, full_name")
@@ -95,8 +96,10 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
             למשמרת.
           </p>
         </div>
-        <AvailabilityToggle open={availabilityOpen} />
+        <AvailabilityToggle open={settings.availabilityOpen} />
       </div>
+
+      <ShiftSettings hours={settings.shiftHours} />
 
       <WeekNav
         basePath="/admin"
@@ -113,6 +116,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           employees={employees}
           initial={assignments}
           availability={availability}
+          shiftHours={settings.shiftHours}
         />
       </section>
 

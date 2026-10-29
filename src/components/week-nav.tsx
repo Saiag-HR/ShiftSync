@@ -4,6 +4,7 @@ import { addDays, formatWeekRange } from "@/lib/schedule";
 const linkStyles =
   "rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800";
 
+// Arrows point the RTL way: earlier weeks are to the right.
 export function WeekNav({
   basePath,
   weekStart,
@@ -17,21 +18,21 @@ export function WeekNav({
 
   return (
     <nav
-      aria-label="Week"
+      aria-label="ניווט בין שבועות"
       className="flex flex-wrap items-center justify-between gap-3"
     >
       <p className="text-lg font-semibold">{formatWeekRange(weekStart)}</p>
       <div className="flex items-center gap-2">
         <Link href={href(addDays(weekStart, -7))} className={linkStyles}>
-          <span aria-hidden>←</span> Previous
+          <span aria-hidden>→</span> השבוע הקודם
         </Link>
         {weekStart !== currentWeekStart && (
           <Link href={href(currentWeekStart)} className={linkStyles}>
-            This week
+            השבוע הנוכחי
           </Link>
         )}
         <Link href={href(addDays(weekStart, 7))} className={linkStyles}>
-          Next <span aria-hidden>→</span>
+          השבוע הבא <span aria-hidden>←</span>
         </Link>
       </div>
     </nav>

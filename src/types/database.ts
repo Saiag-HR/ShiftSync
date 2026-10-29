@@ -17,18 +17,21 @@ export type Database = {
         Row: {
           id: string;
           full_name: string;
+          username: string;
           role: Database["public"]["Enums"]["user_role"] | null;
           created_at: string | null;
         };
         Insert: {
           id: string;
           full_name: string;
+          username: string;
           role?: Database["public"]["Enums"]["user_role"] | null;
           created_at?: string | null;
         };
         Update: {
           id?: string;
           full_name?: string;
+          username?: string;
           role?: Database["public"]["Enums"]["user_role"] | null;
           created_at?: string | null;
         };

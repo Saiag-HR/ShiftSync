@@ -14,20 +14,21 @@ export function LoginForm() {
     <form action={action} className="space-y-4">
       {state.error && <FormAlert tone="error">{state.error}</FormAlert>}
       <FormField
-        label="Email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        defaultValue={state.fields?.email}
+        label="שם משתמש"
+        name="username"
+        autoComplete="username"
+        defaultValue={state.fields?.username}
+        ltr
       />
       <FormField
-        label="Password"
+        label="סיסמה"
         name="password"
         type="password"
         autoComplete="current-password"
+        ltr
       />
-      <SubmitButton pending={pending} pendingLabel="Signing in…">
-        Sign in
+      <SubmitButton pending={pending} pendingLabel="מתחברים…">
+        התחברות
       </SubmitButton>
     </form>
   );

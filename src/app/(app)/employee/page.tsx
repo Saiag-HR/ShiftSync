@@ -16,7 +16,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { AvailabilityForm } from "./availability-form";
 
-export const metadata: Metadata = { title: "My shifts" };
+export const metadata: Metadata = { title: "המשמרות שלי" };
 
 const shiftOrder = SHIFTS.map((shift) => shift.type);
 
@@ -66,11 +66,10 @@ export default async function EmployeePage({
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Hello, {user.fullName}
+          שלום, {user.fullName}
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Mark the shifts you can work, and check the ones you&apos;ve been
-          assigned.
+          סמנו את המשמרות שבהן תוכלו לעבוד, ובדקו לאילו משמרות שובצתם.
         </p>
       </div>
 
@@ -81,7 +80,7 @@ export default async function EmployeePage({
       />
 
       <section className="space-y-3">
-        <h2 className="font-semibold">My availability</h2>
+        <h2 className="font-semibold">הזמינות שלי</h2>
         <AvailabilityForm
           key={weekStart}
           weekStart={weekStart}
@@ -92,10 +91,10 @@ export default async function EmployeePage({
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-semibold">My shifts this week</h2>
+        <h2 className="font-semibold">המשמרות שלי השבוע</h2>
         {myShifts.length === 0 ? (
           <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-700">
-            You haven&apos;t been assigned any shifts this week yet.
+            עדיין לא שובצתם למשמרות בשבוע הזה.
           </p>
         ) : (
           <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">

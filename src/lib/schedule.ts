@@ -7,9 +7,9 @@ import type { Enums } from "@/types/database";
 export type ShiftType = Enums<"shift_type">;
 
 export const SHIFTS: { type: ShiftType; label: string }[] = [
-  { type: "morning", label: "Morning" },
-  { type: "evening", label: "Evening" },
-  { type: "night", label: "Night" },
+  { type: "morning", label: "משמרת בוקר" },
+  { type: "evening", label: "משמרת ערב" },
+  { type: "night", label: "משמרת לילה" },
 ];
 
 export const SHIFT_LABELS = Object.fromEntries(
@@ -76,16 +76,16 @@ export function cellKey(date: string, shift: ShiftType) {
   return `${date}|${shift}`;
 }
 
-const weekdayFormat = new Intl.DateTimeFormat("en-GB", {
+const weekdayFormat = new Intl.DateTimeFormat("he-IL", {
   weekday: "short",
   timeZone: "UTC",
 });
-const dayMonthFormat = new Intl.DateTimeFormat("en-GB", {
+const dayMonthFormat = new Intl.DateTimeFormat("he-IL", {
   day: "numeric",
   month: "short",
   timeZone: "UTC",
 });
-const dayMonthYearFormat = new Intl.DateTimeFormat("en-GB", {
+const dayMonthYearFormat = new Intl.DateTimeFormat("he-IL", {
   day: "numeric",
   month: "short",
   year: "numeric",

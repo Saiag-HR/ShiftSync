@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { FormAlert, FormField, SubmitButton } from "@/components/auth-card";
+import { USERNAME_RULES } from "@/lib/username";
 import { signUp, type AuthFormState } from "../actions";
 
 export function SignupForm() {
@@ -10,35 +11,32 @@ export function SignupForm() {
     {},
   );
 
-  if (state.message) {
-    return <FormAlert tone="success">{state.message}</FormAlert>;
-  }
-
   return (
     <form action={action} className="space-y-4">
       {state.error && <FormAlert tone="error">{state.error}</FormAlert>}
       <FormField
-        label="Full name"
+        label="שם מלא"
         name="fullName"
         autoComplete="name"
         defaultValue={state.fields?.fullName}
       />
       <FormField
-        label="Email"
-        name="email"
-        type="email"
-        autoComplete="email"
-        defaultValue={state.fields?.email}
+        label="שם משתמש"
+        name="username"
+        autoComplete="username"
+        defaultValue={state.fields?.username}
+        hint={USERNAME_RULES}
+        ltr
       />
       <FormField
-        label="Password"
+        label="סיסמה"
         name="password"
         type="password"
         autoComplete="new-password"
-        minLength={8}
+        ltr
       />
-      <SubmitButton pending={pending} pendingLabel="Creating account…">
-        Sign up
+      <SubmitButton pending={pending} pendingLabel="יוצרים חשבון…">
+        הרשמה
       </SubmitButton>
     </form>
   );

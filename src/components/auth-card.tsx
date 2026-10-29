@@ -37,14 +37,17 @@ export function FormField({
   type = "text",
   autoComplete,
   defaultValue,
-  minLength,
+  hint,
+  ltr = false,
 }: {
   label: string;
   name: string;
   type?: string;
   autoComplete?: string;
   defaultValue?: string;
-  minLength?: number;
+  hint?: string;
+  // For Latin-only input (usernames, passwords) inside the RTL layout.
+  ltr?: boolean;
 }) {
   return (
     <label className="block">
@@ -54,10 +57,15 @@ export function FormField({
         type={type}
         autoComplete={autoComplete}
         defaultValue={defaultValue}
-        minLength={minLength}
+        dir={ltr ? "ltr" : undefined}
+        autoCapitalize={ltr ? "none" : undefined}
+        spellCheck={ltr ? false : undefined}
         required
         className="mt-1.5 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-400 dark:focus:ring-zinc-400/20"
       />
+      {hint && (
+        <span className="mt-1 block text-xs text-zinc-500">{hint}</span>
+      )}
     </label>
   );
 }

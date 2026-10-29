@@ -27,7 +27,7 @@ export async function saveAvailability(
   const user = await getCurrentUser();
 
   if (!isIsoDate(weekStart) || startOfWeek(weekStart) !== weekStart) {
-    return { ok: false, error: "Invalid week." };
+    return { ok: false, error: "שבוע לא תקין." };
   }
 
   const allowedDates = new Set(weekDates(weekStart));
@@ -41,7 +41,7 @@ export async function saveAvailability(
       typeof entry.available === "boolean",
   );
   if (!valid || entries.length === 0) {
-    return { ok: false, error: "You can only update upcoming shifts." };
+    return { ok: false, error: "אפשר לעדכן רק משמרות עתידיות." };
   }
 
   const supabase = await createClient();
@@ -56,7 +56,7 @@ export async function saveAvailability(
   );
 
   if (error) {
-    return { ok: false, error: "Couldn't save your availability. Try again." };
+    return { ok: false, error: "לא הצלחנו לשמור את הזמינות. נסו שוב." };
   }
 
   refresh();

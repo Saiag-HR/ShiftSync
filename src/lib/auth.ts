@@ -8,7 +8,7 @@ export type UserRole = Enums<"user_role">;
 
 export type CurrentUser = {
   id: string;
-  email: string | undefined;
+  username: string;
   fullName: string;
   role: UserRole;
 };
@@ -16,6 +16,11 @@ export type CurrentUser = {
 export const ROLE_HOME: Record<UserRole, string> = {
   admin: "/admin",
   employee: "/employee",
+};
+
+export const ROLE_LABELS: Record<UserRole, string> = {
+  admin: "מנהל",
+  employee: "עובד",
 };
 
 // Reads the session at request time, so callers must render behind <Suspense>.
@@ -30,7 +35,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
 
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("id, full_name, role")
+    .select("id, full_name, username, role")
     .eq("id", data.claims.sub)
     .single();
 
@@ -42,7 +47,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser> => {
 
   return {
     id: profile.id,
-    email: data.claims.email,
+    username: profile.username,
     fullName: profile.full_name,
     role: profile.role ?? "employee",
   };

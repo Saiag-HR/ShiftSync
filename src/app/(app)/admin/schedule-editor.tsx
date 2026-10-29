@@ -65,7 +65,7 @@ export function ScheduleEditor({
       const result = await saveSchedule(weekStart, changes);
       if (result.ok) {
         setSaved(assignments);
-        setStatus({ tone: "success", text: "Schedule saved." });
+        setStatus({ tone: "success", text: "הסידור נשמר." });
       } else {
         setStatus({ tone: "error", text: result.error });
       }
@@ -75,7 +75,7 @@ export function ScheduleEditor({
   if (employees.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-700">
-        No employees yet. Once employees sign up, you can assign them here.
+        עדיין אין עובדים. אחרי שעובדים יירשמו, תוכלו לשבץ אותם כאן.
       </p>
     );
   }
@@ -100,7 +100,7 @@ export function ScheduleEditor({
           <tbody>
             {SHIFTS.map((shift) => (
               <tr key={shift.type} className="border-t border-zinc-100 align-top dark:border-zinc-800">
-                <th scope="row" className="p-3 text-left font-medium">
+                <th scope="row" className="p-3 text-start font-medium">
                   {shift.label}
                 </th>
                 {dates.map((date) => {
@@ -134,11 +134,13 @@ export function ScheduleEditor({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          {filledCount} of {allKeys.length} shifts filled
+          {filledCount} מתוך {allKeys.length} משמרות מאוישות
           {changedKeys.length > 0 && (
-            <span className="ml-2 font-medium text-amber-700 dark:text-amber-400">
-              · {changedKeys.length} unsaved{" "}
-              {changedKeys.length === 1 ? "change" : "changes"}
+            <span className="ms-2 font-medium text-amber-700 dark:text-amber-400">
+              ·{" "}
+              {changedKeys.length === 1
+                ? "שינוי אחד שלא נשמר"
+                : `${changedKeys.length} שינויים שלא נשמרו`}
             </span>
           )}
         </p>
@@ -160,7 +162,7 @@ export function ScheduleEditor({
             disabled={pending || changedKeys.length === 0}
             className="rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
-            Discard
+            ביטול שינויים
           </button>
           <button
             type="button"
@@ -168,7 +170,7 @@ export function ScheduleEditor({
             disabled={pending || changedKeys.length === 0}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {pending ? "Saving…" : "Save schedule"}
+            {pending ? "שומרים…" : "שמירת סידור"}
           </button>
         </div>
       </div>
@@ -204,19 +206,20 @@ function ShiftCell({
   let note: string;
   let tone: keyof typeof cellTones;
   if (!assignedId) {
-    note = `${available.length} available`;
+    note =
+      available.length === 1 ? "עובד אחד זמין" : `${available.length} עובדים זמינים`;
     tone = "empty";
   } else if (otherShiftToday) {
-    note = `Also on ${SHIFT_LABELS[otherShiftToday].toLowerCase()} shift`;
+    note = `משובץ גם ב${SHIFT_LABELS[otherShiftToday]}`;
     tone = "warn";
   } else if (availability[assignedId] === false) {
-    note = "Marked unavailable";
+    note = "לא זמין";
     tone = "warn";
   } else if (availability[assignedId] === undefined) {
-    note = "No availability sent";
+    note = "טרם השיב";
     tone = "warn";
   } else {
-    note = "Available";
+    note = "זמין";
     tone = "ok";
   }
 
@@ -231,13 +234,13 @@ function ShiftCell({
         onChange={(event) => onChange(event.target.value || null)}
         className="w-full rounded-md border border-zinc-300 bg-white px-2 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
       >
-        <option value="">Unassigned</option>
+        <option value="">לא משובץ</option>
         {assignedId && !names.has(assignedId) && (
-          <option value={assignedId}>Former employee</option>
+          <option value={assignedId}>עובד לשעבר</option>
         )}
-        <EmployeeGroup label="Available" employees={available} />
-        <EmployeeGroup label="No response" employees={noResponse} />
-        <EmployeeGroup label="Unavailable" employees={unavailable} />
+        <EmployeeGroup label="זמינים" employees={available} />
+        <EmployeeGroup label="טרם השיבו" employees={noResponse} />
+        <EmployeeGroup label="לא זמינים" employees={unavailable} />
       </select>
       <p
         className={`mt-1 px-0.5 text-xs ${tone === "warn" ? "text-amber-700 dark:text-amber-400" : "text-zinc-500"}`}

@@ -1,52 +1,61 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ROLE_HOME } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import {
+  normalizeUsername,
+  USERNAME_PATTERN,
+  USERNAME_RULES,
+  usernameToAuthEmail,
+} from "@/lib/username";
 
 export type AuthFormState = {
   error?: string;
-  message?: string;
-  fields?: { fullName?: string; email?: string };
+  fields?: { fullName?: string; username?: string };
 };
 
-const MIN_PASSWORD_LENGTH = 8;
+const INVALID_CREDENTIALS = "שם המשתמש או הסיסמה שגויים.";
+const USERNAME_TAKEN = "שם המשתמש הזה כבר תפוס. נסו שם אחר.";
 
 export async function signIn(
   _prev: AuthFormState,
   formData: FormData,
 ): Promise<AuthFormState> {
-  const email = String(formData.get("email") ?? "").trim();
+  const username = normalizeUsername(formData.get("username"));
   const password = String(formData.get("password") ?? "");
+  const fields = { username };
 
-  if (!email || !password) {
-    return { error: "Enter your email and password.", fields: { email } };
+  if (!username || !password) {
+    return { error: "יש להזין שם משתמש וסיסמה.", fields };
+  }
+
+  // Look up the account's auth email by username. This also covers users
+  // who signed up with a real email before usernames existed.
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("id, role")
+    .eq("username", username)
+    .maybeSingle();
+  if (!profile) {
+    return { error: INVALID_CREDENTIALS, fields };
+  }
+
+  const { data: authUser } = await admin.auth.admin.getUserById(profile.id);
+  const email = authUser.user?.email;
+  if (!email) {
+    return { error: INVALID_CREDENTIALS, fields };
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    return {
-      error:
-        error.code === "email_not_confirmed"
-          ? "Confirm your email address first. Check your inbox for the link."
-          : "Incorrect email or password.",
-      fields: { email },
-    };
+    return { error: INVALID_CREDENTIALS, fields };
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", data.user.id)
-    .single();
-
-  redirect(ROLE_HOME[profile?.role ?? "employee"]);
+  redirect(ROLE_HOME[profile.role ?? "employee"]);
 }
 
 export async function signUp(
@@ -54,59 +63,71 @@ export async function signUp(
   formData: FormData,
 ): Promise<AuthFormState> {
   const fullName = String(formData.get("fullName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const username = normalizeUsername(formData.get("username"));
   const password = String(formData.get("password") ?? "");
-  const fields = { fullName, email };
+  const fields = { fullName, username };
 
-  if (!fullName || !email || !password) {
-    return { error: "Fill in all fields.", fields };
+  if (!fullName || !username || !password) {
+    return { error: "יש למלא את כל השדות.", fields };
   }
-  if (password.length < MIN_PASSWORD_LENGTH) {
-    return {
-      error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
-      fields,
-    };
+  if (!USERNAME_PATTERN.test(username)) {
+    return { error: `שם משתמש לא תקין. ${USERNAME_RULES}`, fields };
+  }
+
+  const admin = createAdminClient();
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+  if (existing) {
+    return { error: USERNAME_TAKEN, fields };
+  }
+
+  // Created through the admin API so the account is confirmed immediately:
+  // the generated email address can't receive a confirmation link.
+  const email = usernameToAuthEmail(username);
+  const { error: createError } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    // Read by the handle_new_user trigger to fill the profile.
+    user_metadata: { username, full_name: fullName },
+  });
+
+  if (createError) {
+    // The app sets no password rules; this is Supabase's own minimum.
+    if (createError.code === "weak_password") {
+      return {
+        error: "הסיסמה קצרה מדי. Supabase דורש לפחות 6 תווים.",
+        fields,
+      };
+    }
+    // A username taken between the check above and now fails the
+    // profile insert, or the generated email already exists.
+    if (
+      createError.code === "email_exists" ||
+      createError.code === "unexpected_failure"
+    ) {
+      return { error: USERNAME_TAKEN, fields };
+    }
+    return { error: "לא הצלחנו ליצור את החשבון. נסו שוב.", fields };
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({
+  const { error: signInError } = await supabase.auth.signInWithPassword({
     email,
     password,
-    options: {
-      // Read by the handle_new_user trigger to fill profiles.full_name.
-      data: { full_name: fullName },
-      emailRedirectTo: `${await getOrigin()}/auth/confirm`,
-    },
   });
-
-  if (error) {
-    return { error: error.message, fields };
+  if (signInError) {
+    return { error: "החשבון נוצר. התחברו כדי להמשיך.", fields };
   }
 
-  // Email confirmation is off in Supabase: the user is already signed in.
-  if (data.session) {
-    redirect(ROLE_HOME.employee);
-  }
-
-  // Supabase returns the same response for an already registered email,
-  // so this message doesn't reveal whether an account exists.
-  return {
-    message: `We sent a confirmation link to ${email}. Open it to finish signing up.`,
-  };
+  redirect(ROLE_HOME.employee);
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
-}
-
-async function getOrigin() {
-  const headerList = await headers();
-  const origin = headerList.get("origin");
-  if (origin) return origin;
-
-  const host = headerList.get("x-forwarded-host") ?? headerList.get("host");
-  const protocol = headerList.get("x-forwarded-proto") ?? "http";
-  return `${protocol}://${host}`;
 }

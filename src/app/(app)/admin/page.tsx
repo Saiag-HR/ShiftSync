@@ -13,7 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { ScheduleEditor, type ScheduleEmployee } from "./schedule-editor";
 
-export const metadata: Metadata = { title: "Schedule" };
+export const metadata: Metadata = { title: "שיבוץ עובדים" };
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const user = await getCurrentUser();
@@ -82,11 +82,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
-          Hello, {user.fullName}
+          שלום, {user.fullName}
         </h1>
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Pick an employee for each shift. Employees who said they&apos;re
-          available are listed first.
+          בחרו עובד לכל משמרת. עובדים שסימנו שהם זמינים מופיעים ראשונים
+          ברשימה.
         </p>
       </div>
 
@@ -97,7 +97,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       />
 
       <section className="space-y-3">
-        <h2 className="font-semibold">Schedule</h2>
+        <h2 className="font-semibold">שיבוץ עובדים</h2>
         <ScheduleEditor
           key={weekStart}
           weekStart={weekStart}
@@ -111,9 +111,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
       {employees.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="font-semibold">Team availability</h2>
+            <h2 className="font-semibold">זמינות הצוות</h2>
             <p className="text-sm text-zinc-500">
-              {respondedCount} of {employees.length} responded
+              {respondedCount} מתוך {employees.length} השיבו
             </p>
           </div>
           <ul className="divide-y divide-zinc-100 rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
@@ -125,12 +125,12 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
                 <span className="font-medium">{employee.fullName}</span>
                 {responded.has(employee.id) ? (
                   <span className="text-zinc-600 dark:text-zinc-400">
-                    Available for {availableCount.get(employee.id) ?? 0} of{" "}
-                    {totalShifts} shifts
+                    זמין ל-{availableCount.get(employee.id) ?? 0} מתוך{" "}
+                    {totalShifts} משמרות
                   </span>
                 ) : (
                   <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                    No response
+                    טרם השיב
                   </span>
                 )}
               </li>

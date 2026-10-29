@@ -65,7 +65,7 @@ export function AvailabilityForm({
         entries.forEach((e) => (next[cellKey(e.date, e.shift)] = e.available));
         setSaved(next);
         setValues(next);
-        setStatus({ tone: "success", text: "Availability saved." });
+        setStatus({ tone: "success", text: "הזמינות נשמרה." });
       } else {
         setStatus({ tone: "error", text: result.error });
       }
@@ -75,7 +75,7 @@ export function AvailabilityForm({
   if (editableDates.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-zinc-300 p-6 text-sm text-zinc-500 dark:border-zinc-700">
-        This week has passed, so availability can&apos;t be changed.
+        השבוע הזה כבר עבר, ולכן אי אפשר לשנות בו את הזמינות.
       </p>
     );
   }
@@ -84,8 +84,8 @@ export function AvailabilityForm({
     <div className="space-y-4">
       {!hasAnswered && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
-          You haven&apos;t submitted availability for this week yet. Select the
-          shifts you can work, then save.
+          עדיין לא הגשתם זמינות לשבוע הזה. סמנו את המשמרות שבהן תוכלו לעבוד,
+          ואז שמרו.
         </p>
       )}
 
@@ -114,7 +114,7 @@ export function AvailabilityForm({
                         onClick={() => setMany(dayKeys, !allOn)}
                         className="mt-1 text-xs font-normal text-zinc-500 underline hover:text-zinc-900 dark:hover:text-white"
                       >
-                        {allOn ? "Clear" : "All day"}
+                        {allOn ? "ניקוי" : "כל היום"}
                       </button>
                     )}
                   </th>
@@ -128,7 +128,7 @@ export function AvailabilityForm({
                 key={shift.type}
                 className="border-t border-zinc-100 dark:border-zinc-800"
               >
-                <th scope="row" className="p-3 text-left font-medium">
+                <th scope="row" className="p-3 text-start font-medium">
                   {shift.label}
                 </th>
                 {dates.map((date) => {
@@ -149,7 +149,7 @@ export function AvailabilityForm({
                             : "border-zinc-200 bg-zinc-50 text-zinc-400 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950"
                         } ${isPast ? "opacity-50" : ""}`}
                       >
-                        {available ? "Available" : "—"}
+                        {available ? "זמין" : "—"}
                       </button>
                     </td>
                   );
@@ -168,7 +168,7 @@ export function AvailabilityForm({
             disabled={pending}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
-            Available all week
+            זמין כל השבוע
           </button>
           <button
             type="button"
@@ -176,7 +176,7 @@ export function AvailabilityForm({
             disabled={pending}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
-            Clear all
+            ניקוי הכול
           </button>
         </div>
         <div className="flex items-center gap-3">
@@ -194,7 +194,7 @@ export function AvailabilityForm({
             disabled={pending || !isDirty}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {pending ? "Saving…" : "Save availability"}
+            {pending ? "שומרים…" : "שמירת זמינות"}
           </button>
         </div>
       </div>

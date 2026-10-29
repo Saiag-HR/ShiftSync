@@ -29,7 +29,7 @@ export async function saveSchedule(
   await requireRole("admin");
 
   if (!isIsoDate(weekStart) || startOfWeek(weekStart) !== weekStart) {
-    return { ok: false, error: "Invalid week." };
+    return { ok: false, error: "שבוע לא תקין." };
   }
 
   const allowedDates = new Set(weekDates(weekStart));
@@ -41,7 +41,7 @@ export async function saveSchedule(
         (typeof change.employeeId === "string" && UUID.test(change.employeeId))),
   );
   if (!valid || changes.length === 0) {
-    return { ok: false, error: "Invalid schedule changes." };
+    return { ok: false, error: "השינויים בסידור אינם תקינים." };
   }
 
   // An unassigned shift is stored as a row with employee_id = null, the same
@@ -57,7 +57,7 @@ export async function saveSchedule(
   );
 
   if (error) {
-    return { ok: false, error: "Couldn't save the schedule. Try again." };
+    return { ok: false, error: "לא הצלחנו לשמור את הסידור. נסו שוב." };
   }
 
   refresh();

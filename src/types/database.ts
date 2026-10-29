@@ -37,6 +37,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      system_settings: {
+        Row: {
+          key: string;
+          value: Json;
+          updated_at: string | null;
+        };
+        Insert: {
+          key: string;
+          value: Json;
+          updated_at?: string | null;
+        };
+        Update: {
+          key?: string;
+          value?: Json;
+          updated_at?: string | null;
+        };
+        Relationships: [];
+      };
       shift_availabilities: {
         Row: {
           id: string;
@@ -115,6 +133,10 @@ export type Database = {
     Views: { [_ in never]: never };
     Functions: {
       is_admin: {
+        Args: Record<PropertyKey, never>;
+        Returns: boolean;
+      };
+      is_availability_open: {
         Args: Record<PropertyKey, never>;
         Returns: boolean;
       };

@@ -9,6 +9,7 @@ import {
   weekDates,
   type ShiftType,
 } from "@/lib/schedule";
+import { AVAILABILITY_OPEN_KEY } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 
 export type AssignmentChange = {
@@ -58,6 +59,29 @@ export async function saveSchedule(
 
   if (error) {
     return { ok: false, error: "לא הצלחנו לשמור את הסידור. נסו שוב." };
+  }
+
+  refresh();
+  return { ok: true };
+}
+
+export async function setAvailabilityOpen(open: boolean): Promise<SaveResult> {
+  await requireRole("admin");
+
+  if (typeof open !== "boolean") {
+    return { ok: false, error: "ערך לא תקין." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("system_settings")
+    .update({ value: open })
+    .eq("key", AVAILABILITY_OPEN_KEY)
+    .select("key");
+
+  // No row back means RLS blocked the update or the row is missing.
+  if (error || data.length === 0) {
+    return { ok: false, error: "לא הצלחנו לעדכן את מצב ההגשה. נסו שוב." };
   }
 
   refresh();

@@ -16,10 +16,13 @@ export function AvailabilityForm({
   dates,
   today,
   initial,
+  open,
 }: {
   weekStart: string;
   dates: string[];
   today: string;
+  // Whether an admin has opened availability submission.
+  open: boolean;
   // Keyed by cellKey(); missing keys mean the employee hasn't answered yet.
   initial: Record<string, boolean>;
 }) {
@@ -80,9 +83,20 @@ export function AvailabilityForm({
     );
   }
 
+  const locked = !open;
+
   return (
     <div className="space-y-4">
-      {!hasAnswered && (
+      {locked && (
+        <p
+          role="status"
+          className="flex items-center gap-2 rounded-lg border border-zinc-300 bg-zinc-100 px-3 py-2 text-sm font-medium text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+        >
+          <span aria-hidden>🔒</span>
+          הגשת הזמינות השבועית סגורה כעת
+        </p>
+      )}
+      {open && !hasAnswered && (
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
           עדיין לא הגשתם זמינות לשבוע הזה. סמנו את המשמרות שבהן תוכלו לעבוד,
           ואז שמרו.
@@ -108,7 +122,7 @@ export function AvailabilityForm({
                     <span className="block text-xs font-normal text-zinc-500">
                       {formatDayMonth(date)}
                     </span>
-                    {!isPast && (
+                    {!isPast && !locked && (
                       <button
                         type="button"
                         onClick={() => setMany(dayKeys, !allOn)}
@@ -141,13 +155,13 @@ export function AvailabilityForm({
                         type="button"
                         aria-pressed={available}
                         aria-label={`${shift.label}, ${formatWeekday(date)} ${formatDayMonth(date)}`}
-                        disabled={isPast || pending}
+                        disabled={isPast || pending || locked}
                         onClick={() => setMany([key], !available)}
                         className={`h-12 w-full rounded-lg border text-xs font-medium transition-colors disabled:cursor-not-allowed ${
                           available
                             ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300"
                             : "border-zinc-200 bg-zinc-50 text-zinc-400 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950"
-                        } ${isPast ? "opacity-50" : ""}`}
+                        } ${isPast || locked ? "opacity-50" : ""}`}
                       >
                         {available ? "זמין" : "—"}
                       </button>
@@ -165,7 +179,7 @@ export function AvailabilityForm({
           <button
             type="button"
             onClick={() => setMany(editableKeys, true)}
-            disabled={pending}
+            disabled={pending || locked}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             זמין כל השבוע
@@ -173,7 +187,7 @@ export function AvailabilityForm({
           <button
             type="button"
             onClick={() => setMany(editableKeys, false)}
-            disabled={pending}
+            disabled={pending || locked}
             className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-800"
           >
             ניקוי הכול
@@ -191,7 +205,7 @@ export function AvailabilityForm({
           <button
             type="button"
             onClick={handleSave}
-            disabled={pending || !isDirty}
+            disabled={pending || !isDirty || locked}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
             {pending ? "שומרים…" : "שמירת זמינות"}

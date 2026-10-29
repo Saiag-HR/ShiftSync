@@ -10,6 +10,7 @@ import {
   weekDates,
   type ShiftType,
 } from "@/lib/schedule";
+import { getAvailabilityOpen } from "@/lib/settings";
 import { createClient } from "@/lib/supabase/server";
 
 export type AvailabilityEntry = {
@@ -42,6 +43,11 @@ export async function saveAvailability(
   );
   if (!valid || entries.length === 0) {
     return { ok: false, error: "אפשר לעדכן רק משמרות עתידיות." };
+  }
+
+  // Also enforced by RLS; checked here to give a clear message.
+  if (!(await getAvailabilityOpen())) {
+    return { ok: false, error: "הגשת הזמינות השבועית סגורה כעת" };
   }
 
   const supabase = await createClient();

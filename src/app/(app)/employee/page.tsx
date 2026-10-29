@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { SettingsListener } from "@/components/settings-listener";
 import { WeekNav } from "@/components/week-nav";
 import { getCurrentUser } from "@/lib/auth";
+import { getAvailabilityOpen } from "@/lib/settings";
 import {
   cellKey,
   formatDayMonth,
@@ -33,7 +35,8 @@ export default async function EmployeePage({
   const weekEnd = dates[dates.length - 1];
 
   const supabase = await createClient();
-  const [availabilityResult, assignmentsResult] = await Promise.all([
+  const [availabilityOpen, availabilityResult, assignmentsResult] = await Promise.all([
+    getAvailabilityOpen(),
     supabase
       .from("shift_availabilities")
       .select("shift_date, shift_type, is_available")
@@ -64,6 +67,7 @@ export default async function EmployeePage({
 
   return (
     <div className="space-y-8">
+      <SettingsListener />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           שלום, {user.fullName}
@@ -87,6 +91,7 @@ export default async function EmployeePage({
           dates={dates}
           today={today}
           initial={availability}
+          open={availabilityOpen}
         />
       </section>
 

@@ -39,6 +39,7 @@ export function ScheduleEditor({
   const [saved, setSaved] = useState(initial);
   const [assignments, setAssignments] = useState(initial);
   const [status, setStatus] = useState<Status>(null);
+  const [showAll, setShowAll] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const names = new Map(employees.map((e) => [e.id, e.fullName]));
@@ -82,6 +83,15 @@ export function ScheduleEditor({
 
   return (
     <div className="space-y-4">
+      <label className="flex w-fit items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <input
+          type="checkbox"
+          checked={showAll}
+          onChange={(event) => setShowAll(event.target.checked)}
+          className="size-4 accent-zinc-900 dark:accent-white"
+        />
+        הצגת כל העובדים ברשימה, כולל מי שלא סימן זמינות
+      </label>
       <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <table className="w-full min-w-[960px] border-collapse text-sm">
           <thead>
@@ -120,6 +130,7 @@ export function ScheduleEditor({
                           shift.type,
                           assignments[key] ?? null,
                         )}
+                        showAll={showAll}
                         disabled={pending}
                         onChange={(employeeId) => assign(key, employeeId)}
                       />
@@ -186,10 +197,12 @@ function ShiftCell({
   changed,
   availability,
   otherShiftToday,
+  showAll,
   disabled,
   onChange,
 }: {
   label: string;
+  showAll: boolean;
   employees: ScheduleEmployee[];
   names: Map<string, string>;
   assignedId: string | null;
@@ -207,7 +220,11 @@ function ShiftCell({
   let tone: keyof typeof cellTones;
   if (!assignedId) {
     note =
-      available.length === 1 ? "עובד אחד זמין" : `${available.length} עובדים זמינים`;
+      available.length === 0
+        ? "אין עובדים זמינים"
+        : available.length === 1
+          ? "עובד אחד זמין"
+          : `${available.length} עובדים זמינים`;
     tone = "empty";
   } else if (otherShiftToday) {
     note = `משובץ גם ב${SHIFT_LABELS[otherShiftToday]}`;
@@ -238,9 +255,31 @@ function ShiftCell({
         {assignedId && !names.has(assignedId) && (
           <option value={assignedId}>עובד לשעבר</option>
         )}
-        <EmployeeGroup label="זמינים" employees={available} />
-        <EmployeeGroup label="טרם השיבו" employees={noResponse} />
-        <EmployeeGroup label="לא זמינים" employees={unavailable} />
+        {showAll ? (
+          <>
+            <EmployeeGroup label="זמינים" employees={available} />
+            <EmployeeGroup label="טרם השיבו" employees={noResponse} />
+            <EmployeeGroup label="לא זמינים" employees={unavailable} />
+          </>
+        ) : (
+          <>
+            {available.map((employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.fullName}
+              </option>
+            ))}
+            {/* Keep an existing assignment visible even if it no longer
+                matches the filter, so the select can show it. */}
+            {assignedId &&
+              names.has(assignedId) &&
+              availability[assignedId] !== true && (
+                <option value={assignedId}>
+                  {names.get(assignedId)} (
+                  {availability[assignedId] === false ? "לא זמין" : "טרם השיב"})
+                </option>
+              )}
+          </>
+        )}
       </select>
       <p
         className={`mt-1 px-0.5 text-xs ${tone === "warn" ? "text-amber-700 dark:text-amber-400" : "text-zinc-500"}`}

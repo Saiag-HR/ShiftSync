@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
+import { SettingsListener } from "@/components/settings-listener";
 import { WeekNav } from "@/components/week-nav";
 import { getCurrentUser } from "@/lib/auth";
+import { getAvailabilityOpen } from "@/lib/settings";
 import {
   cellKey,
   resolveWeekStart,
@@ -11,6 +13,7 @@ import {
   weekDates,
 } from "@/lib/schedule";
 import { createClient } from "@/lib/supabase/server";
+import { AvailabilityToggle } from "./availability-toggle";
 import { ScheduleEditor, type ScheduleEmployee } from "./schedule-editor";
 
 export const metadata: Metadata = { title: "שיבוץ עובדים" };
@@ -26,8 +29,9 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
   const weekEnd = dates[dates.length - 1];
 
   const supabase = await createClient();
-  const [employeesResult, assignmentsResult, availabilityResult] =
+  const [availabilityOpen, employeesResult, assignmentsResult, availabilityResult] =
     await Promise.all([
+      getAvailabilityOpen(),
       supabase
         .from("profiles")
         .select("id, full_name")
@@ -80,14 +84,18 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          שלום, {user.fullName}
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          בחרו עובד לכל משמרת. עובדים שסימנו שהם זמינים מופיעים ראשונים
-          ברשימה.
-        </p>
+      <SettingsListener />
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            שלום, {user.fullName}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+            בחרו עובד לכל משמרת. ברשימה מופיעים רק עובדים שסימנו שהם זמינים
+            למשמרת.
+          </p>
+        </div>
+        <AvailabilityToggle open={availabilityOpen} />
       </div>
 
       <WeekNav
